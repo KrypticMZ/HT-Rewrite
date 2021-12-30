@@ -1,0 +1,108 @@
+package me.htrewrite.client.module.modules.render;
+
+import me.htrewrite.client.HTRewrite;
+import me.htrewrite.client.event.custom.render.RenderEvent;
+import me.htrewrite.client.module.Module;
+import me.htrewrite.client.module.ModuleType;
+import me.htrewrite.exeterimports.mcapi.settings.ToggleableSetting;
+import me.htrewrite.exeterimports.mcapi.settings.ValueSetting;
+import me.zero.alpine.fork.listener.EventHandler;
+import me.zero.alpine.fork.listener.Listener;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.math.Vec3d;
+import org.lwjgl.opengl.GL11;
+
+import java.awt.*;
+
+public class TracersModule extends Module {
+    public static final ToggleableSetting friends = new ToggleableSetting("Friends", null, true);
+    public static final ValueSetting<Double> range = new ValueSetting<>("Range", null, 50d, 0d, 250d);
+    public static final ValueSetting<Double> width = new ValueSetting<>("Width", null, 1d, 0d, 5d);
+    public static final ValueSetting<Double> offset = new ValueSetting<>("Offset", null, 0d, -4d, 4d);
+
+    public TracersModule() {
+        super("Tracers", "Trace a line to players near you.", ModuleType.Render, 0);
+        addOption(friends);
+        addOption(range);
+        addOption(width);
+        addOption(offset);
+        endOption();
+    }
+
+    @EventHandler
+    private Listener<RenderEvent> renderEventListener = new Listener<>(event -> {
+        if(nullCheck())
+            return;
+
+        GlStateManager.pushMatrix();
+        final float[][] colour = new float[1][1];
+        mc.world.loadedEntityList.forEach(entity -> {
+            if (!(entity instanceof EntityPlayer) || entity == mc.player) return;
+            EntityPlayer player = (EntityPlayer)entity;
+
+            if (mc.player.getDistance(player) > range.getValue().intValue()) return;
+            if (HTRewrite.INSTANCE.getFriendManager().isFriend(player.getName()) && !friends.isEnabled()) return;
+
+            colour[0] = getColorByDistance(player);
+            drawLineToEntity(player, colour[0][0], colour[0][1], colour[0][2], colour[0][3]);
+            return;
+        });
+        GlStateManager.popMatrix();
+    });
+
+    public double interpolate(final double now, final double then) {
+        return then + (now - then) * mc.getRenderPartialTicks();
+    }
+
+    public double[] interpolate(final Entity entity) {
+        final double posX = this.interpolate(entity.posX, entity.lastTickPosX) - mc.getRenderManager().renderPosX;
+        final double posY = this.interpolate(entity.posY, entity.lastTickPosY) - mc.getRenderManager().renderPosY;
+        final double posZ = this.interpolate(entity.posZ, entity.lastTickPosZ) - mc.getRenderManager().renderPosZ;
+        return new double[] { posX, posY, posZ };
+    }
+
+    public void drawLineToEntity(final Entity e, final float red, final float green, final float blue, final float opacity) {
+        final double[] xyz = this.interpolate(e);
+        this.drawLine(xyz[0], xyz[1], xyz[2], e.height, red, green, blue, opacity);
+    }
+
+    public void drawLine(final double posx, final double posy, final double posz, final double up, final float red, final float green, final float blue, final float opacity) {
+        final Vec3d eyes = new Vec3d(0.0, 0.0, 1.0).rotatePitch(-(float)Math.toRadians(mc.player.rotationPitch)).rotateYaw(-(float)Math.toRadians(mc.player.rotationYaw));
+        drawLineFromPosToPos(eyes.x, eyes.y + mc.player.getEyeHeight() + offset.getValue().floatValue(), eyes.z, posx, posy, posz, up, red, green, blue, opacity);
+
+    }
+
+    public void drawLineFromPosToPos(final double posx, final double posy, final double posz, final double posx2, final double posy2, final double posz2, final double up, final float red, final float green, final float blue, final float opacity) {
+        GL11.glBlendFunc(770, 771);
+        GL11.glEnable(3042);
+        GL11.glLineWidth(width.getValue().floatValue());
+        GL11.glDisable(3553);
+        GL11.glDisable(2929);
+        GL11.glDepthMask(false);
+        GL11.glColor4f(red, green, blue, opacity);
+        GlStateManager.disableLighting();
+        GL11.glLoadIdentity();
+        mc.entityRenderer.orientCamera(mc.getRenderPartialTicks());
+        GL11.glBegin(1);
+        GL11.glVertex3d(posx, posy, posz);
+        GL11.glVertex3d(posx2, posy2, posz2);
+        GL11.glVertex3d(posx2, posy2, posz2);
+        GL11.glEnd();
+        GL11.glEnable(3553);
+        GL11.glEnable(2929);
+        GL11.glDepthMask(true);
+        GL11.glDisable(3042);
+        GL11.glColor3d(1.0, 1.0, 1.0);
+        GlStateManager.enableLighting();
+    }
+
+    public float[] getColorByDistance(final Entity entity) {
+        if (entity instanceof EntityPlayer && HTRewrite.INSTANCE.getFriendManager().isFriend(entity.getName())) {
+            return new float[] { 0.0f, 0.5f, 1.0f, 1.0f };
+        }
+        final Color col = new Color(Color.HSBtoRGB((float)(Math.max(0.0, Math.min(mc.player.getDistanceSq(entity), 2500.0f) / 2500.0f) / 3.0), 1.0f, 0.8f) | 0xFF000000);
+        return new float[] { col.getRed() / 255.0f, col.getGreen() / 255.0f, col.getBlue() / 255.0f, 1.0f };
+    }
+}

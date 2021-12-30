@@ -1,0 +1,41 @@
+{
+  "required": true,
+  "compatibilityLevel": "JAVA_8",
+  "package": "me.htrewrite.client.mixin.client",
+  "refmap": "mixins.htrewrite.refmap.json",
+  "verbose": true,
+  "mixins": [
+    "MixinAbstractHorse",
+    "MixinBlockLiquid",
+    "MixinBlockSoulSand",
+    "MixinEntity",
+    "MixinEntityLivingBase",
+    "MixinEntityLlama",
+    "MixinEntityPig",
+    "MixinEntityPlayer",
+    "MixinEntityPlayerSP",
+    "MixinEntityRenderer",
+    "MixinForgeSplashScreen",
+    "MixinGuiIngameForge",
+    "MixinGuiPlayerTabOverlay",
+    "MixinGuiScreen",
+    "MixinItemRenderer",
+    "MixinKeyBinding",
+    "MixinMinecraft",
+    "MixinMovementInputFromOptions",
+    "MixinNettyCompressionDecoder",
+    "MixinNetworkManager",
+    "MixinPlayerControllerMP",
+    "MixinRenderManager",
+    "MixinRenderPlayer",
+    "MixinTileEntityRendererDispatcher",
+    "MixinVisGraph",
+    "MixinWorld"
+  ],
+  "client": [
+    "MixinGuiBossOverlay",
+    "MixinLayerArmorBase",
+    "MixinMapItemRenderer",
+    "MixinTileEntitySignRenderer"
+  ]
+}

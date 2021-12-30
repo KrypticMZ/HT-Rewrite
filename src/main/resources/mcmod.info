@@ -1,0 +1,12 @@
+[
+    {
+      "modid": "htrewrite",
+      "name": "HT+Rewrite",
+      "description": "HT+Rewrite",
+      "version": "${modVersion}",
+      "mcversion": "${version_minecraft}",
+      "url": "",
+      "updateUrl": "",
+      "authorList": ["PK2_Stimpy"]
+    }
+]
